@@ -1,0 +1,39 @@
+version: '3.7'
+
+services:
+  rethinkdb:
+    image: rethinkdb:${RETHINKDB_TAG}
+    volumes:
+      - ${LOCAL_DATABASE_PATH}:/app
+    networks:
+      - rpg-network
+
+  apache:
+    image: httpd:${HTTPD_TAG}
+    ports:
+      - '8080:80'
+    volumes:
+      - ${LOCAL_CODE_PATH}:/usr/local/apache2/htdocs
+    networks:
+      - rpg-network
+
+  nodejs:
+    ports:
+      - '8097:8097'
+    image: node:${NODE_JS_TAG}
+    working_dir: /home/node/app/server
+    restart: always
+    depends_on:
+      - apache
+      - rethinkdb
+    volumes:
+      - ${NODE_LOCAL_CODE_PATH}:/home/node/app
+    networks:
+      - rpg-network
+    command: >
+      bash -c "sleep 10 && npm install && node mmo.js"
+
+networks:
+  rpg-network:
+    name: rpg-network
+    driver: bridge
